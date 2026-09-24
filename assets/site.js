@@ -138,8 +138,8 @@ window.SITE = {
   }
 
   // ---------- Home page ----------
-  const slidesEl = document.getElementById("hero-slides");
   const featured = works.map((w, i) => (w.featured ? i : -1)).filter((i) => i >= 0);
+  const slidesEl = document.getElementById("hero-slides");
   if (slidesEl && featured.length) {
     const capEl = document.getElementById("hero-caption"), dotsEl = document.getElementById("hero-dots"), pauseEl = document.getElementById("hero-pause");
     slidesEl.innerHTML = featured.map((i, n) => {
@@ -167,6 +167,107 @@ window.SITE = {
     if (featured.length < 2) { dotsEl.hidden = pauseEl.hidden = true; }
     go(0); setPlaying(playing);
   }
+  // ---------- Paper hero: paintings "wash in" like watercolor on wet paper ----------
+  const phCanvas = document.getElementById("ph-canvas");
+  if (phCanvas && featured.length) {
+    const frame = document.getElementById("ph-frame"), capEl = document.getElementById("ph-cap");
+    const dotsEl = document.getElementById("ph-dots"), pauseEl = document.getElementById("ph-pause");
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const ctx = phCanvas.getContext("2d");
+    const mask = document.createElement("canvas"), mctx = mask.getContext("2d");
+    const imgs = {};
+    const load = (i) => imgs[i] || (imgs[i] = new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = works[i].src; }));
+    let cur = -1, raf = 0, timer = 0, playing = !reduce && featured.length > 1, token = 0;
+
+    dotsEl.innerHTML = featured.map((_, n) => `<button type="button" aria-label="Show painting ${n + 1}"></button>`).join("");
+    const dots = [...dotsEl.children];
+
+    function fit(im) { // size the canvas to the painting, contained in the frame
+      const box = frame.getBoundingClientRect(), r = im.width / im.height;
+      const cap = matchMedia("(max-width: 860px)").matches ? innerHeight * 0.56 : box.height; // phones: frame hugs the painting
+      let w = box.width, h = w / r;
+      if (h > cap) { h = cap; w = h * r; }
+      const dpr = Math.min(2, devicePixelRatio || 1);
+      phCanvas.style.width = w + "px"; phCanvas.style.height = h + "px";
+      phCanvas.width = mask.width = Math.round(w * dpr); phCanvas.height = mask.height = Math.round(h * dpr);
+    }
+    function compose(im) {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.clearRect(0, 0, phCanvas.width, phCanvas.height);
+      ctx.drawImage(im, 0, 0, phCanvas.width, phCanvas.height);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(mask, 0, 0);
+      ctx.globalCompositeOperation = "source-over";
+    }
+    function blob(x, y, r, a) { // soft round wash: dense middle, feathered edge
+      const g = mctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(0.55, `rgba(0,0,0,${a * 0.6})`); g.addColorStop(1, "rgba(0,0,0,0)");
+      mctx.fillStyle = g; mctx.beginPath(); mctx.arc(x, y, r, 0, 7); mctx.fill();
+    }
+    function wash(im, my) {
+      const W = mask.width, H = mask.height, D = Math.hypot(W, H);
+      const ox = W * (0.3 + Math.random() * 0.4), oy = H * (0.3 + Math.random() * 0.4);
+      const lobes = Array.from({ length: 7 }, () => ({ a: Math.random() * 6.283, k: 0.75 + Math.random() * 0.5 })); // uneven bloom front
+      mctx.clearRect(0, 0, W, H);
+      const t0 = performance.now(), dur = 3200;
+      phCanvas.classList.remove("gone");
+      (function frameStep(now) {
+        if (my !== token) return;
+        const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 2.2), R = D * 0.66 * e;
+        for (let n = 0; n < 7; n++) {
+          const L = lobes[(Math.random() * lobes.length) | 0], ang = L.a + (Math.random() - 0.5) * 1.1;
+          const d = R * L.k * Math.sqrt(Math.random());
+          blob(ox + Math.cos(ang) * d, oy + Math.sin(ang) * d, D * (0.04 + Math.random() * 0.08) * (0.45 + e), 0.13);
+        }
+        blob(ox, oy, R * 0.55 + 1, 0.07);
+        if (t >= 1) { // settle: let the wash fill the whole sheet
+          mctx.fillStyle = `rgba(0,0,0,${Math.min(1, (now - t0 - dur) / 700) * 0.25})`; mctx.fillRect(0, 0, W, H);
+        }
+        compose(im);
+        if (now - t0 < dur + 720) raf = requestAnimationFrame(frameStep);
+        else { mctx.fillStyle = "#000"; mctx.fillRect(0, 0, W, H); compose(im); }
+      })(t0);
+    }
+    async function go(n, instant) {
+      const my = ++token; cancelAnimationFrame(raf);
+      n = (n + featured.length) % featured.length;
+      const i = featured[n], w = works[i];
+      if (cur >= 0 && !instant) { phCanvas.classList.add("gone"); await new Promise((r) => setTimeout(r, 450)); }
+      const im = await load(i); if (my !== token || !im) return;
+      cur = n; load(featured[(n + 1) % featured.length]); // warm the next one
+      dots.forEach((d, k) => d.toggleAttribute("aria-current", k === n));
+      capEl.innerHTML = `<em>${esc(w.title)}</em>${w.year ? " &middot; " + esc(w.year) : ""}`;
+      frame.setAttribute("aria-label", "View " + w.title);
+      fit(im);
+      if (instant) { mctx.fillStyle = "#000"; mctx.fillRect(0, 0, mask.width, mask.height); compose(im); phCanvas.classList.remove("gone"); }
+      else wash(im, my);
+      schedule();
+    }
+    function schedule() { clearTimeout(timer); if (playing) timer = setTimeout(() => go(cur + 1), 7500); }
+    function setPlaying(p) { playing = p; pauseEl.textContent = p ? "Pause" : "Play"; pauseEl.setAttribute("aria-label", p ? "Pause slideshow" : "Play slideshow"); schedule(); }
+    frame.addEventListener("click", () => { if (swiped) { swiped = false; return; } if (cur >= 0) open(featured, featured[cur]); });
+    let sx = null, swiped = false; // phones: swipe the painting to change it
+    frame.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; }, { passive: true });
+    frame.addEventListener("touchend", (e) => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 45) { swiped = true; go(cur + (dx < 0 ? 1 : -1)); setTimeout(() => (swiped = false), 400); } });
+    dotsEl.addEventListener("click", (e) => { const k = dots.indexOf(e.target); if (k >= 0 && k !== cur) go(k); });
+    pauseEl.addEventListener("click", () => setPlaying(!playing));
+    addEventListener("resize", () => { if (cur >= 0) load(featured[cur]).then((im) => { fit(im); mctx.fillStyle = "#000"; mctx.fillRect(0, 0, mask.width, mask.height); compose(im); }); });
+    if (featured.length < 2) dotsEl.hidden = pauseEl.hidden = true;
+    setPlaying(playing);
+    go(0, reduce);
+
+    // "32 paintings · 7 collections" + a strip of small thumbnails across every collection
+    const cats = [...new Set(works.map((w) => w.category).filter(Boolean))];
+    const countEl = document.getElementById("ph-count"), thumbsEl = document.getElementById("ph-thumbs");
+    if (countEl) countEl.innerHTML = `<strong>${works.length}</strong> paintings &middot; <strong>${cats.length}</strong> collections <a class="link" href="gallery.html">See them all</a>`;
+    if (thumbsEl) {
+      const order = window.CATEGORIES || cats, picks = [];
+      for (let round = 0; picks.length < 14 && round < 6; round++)
+        order.forEach((c) => { const m = works.map((w, k) => k).filter((k) => works[k].category === c && works[k].src); if (m[round] !== undefined && picks.length < 14) picks.push(m[round]); });
+      thumbsEl.innerHTML = picks.map((k, n) => `<a href="gallery.html#${esc(slug(works[k]))}" style="--d:${n * 0.05}s" title="${esc(works[k].title)}"><img src="${esc(thumb(works[k].src))}" alt="${esc(works[k].title)}" loading="lazy" class="fade"></a>`).join("");
+    }
+  }
+
   // Artwork of the day: a different painting each calendar day (same for every visitor that day).
   const aotd = document.getElementById("aotd");
   const withImg = works.map((w, i) => i).filter((i) => works[i].src);

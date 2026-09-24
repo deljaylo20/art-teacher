@@ -81,6 +81,34 @@ section { padding: clamp(64px, 10vw, 128px) 0; }
 .caption { margin-top: 12px; font-size: .82rem; color: var(--muted); }
 .caption em { font-style: italic; color: var(--ink); font-family: var(--serif); font-size: 1.2rem; }
 
+/* Paper hero — a painting washes in on white paper */
+.paper-hero { padding: clamp(24px, 3.4vw, 44px) 0 0; }
+.ph-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: clamp(28px, 5vw, 80px); align-items: center; }
+.ph-name { font-size: clamp(3rem, 5.4vw, 5.4rem); line-height: .98; letter-spacing: -.015em; margin: 14px 0 10px; animation: phIn 1.2s cubic-bezier(.19,1,.22,1) .9s both; }
+.ph-place { margin: 0 0 26px; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); animation: phIn 1.2s cubic-bezier(.19,1,.22,1) 1.05s both; }
+.ph-hook { font-family: var(--serif); font-style: italic; font-size: clamp(1.25rem, 1.9vw, 1.6rem); line-height: 1.4; max-width: 26ch; margin: 0 0 34px; color: #333; animation: phIn 1.2s cubic-bezier(.19,1,.22,1) 1.2s both; }
+.ph-text .eyebrow { animation: phIn 1s ease .6s both; }
+.ph-cta { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; animation: phIn 1.2s cubic-bezier(.19,1,.22,1) 1.5s both; }
+@keyframes phIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.ph-art { margin: 0; display: flex; flex-direction: column; }
+.ph-frame { height: min(60svh, 580px); border: 0; padding: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+.ph-frame canvas { display: block; box-shadow: 0 30px 70px -20px rgba(0,0,0,.28), 0 6px 18px rgba(0,0,0,.08); transition: opacity .45s ease; }
+.ph-frame canvas.gone { opacity: 0; }
+.ph-frame:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
+.ph-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 18px; font-size: .8rem; color: var(--muted); }
+.ph-cap em { font-family: var(--serif); font-size: 1.2rem; color: var(--ink); }
+.ph-ctrl { display: flex; align-items: center; gap: 16px; }
+.ph-ctrl .dots button::before { background: rgba(0,0,0,.18); }
+.ph-ctrl .dots button[aria-current]::before { background: var(--ink); }
+.ph-ctrl .pause { color: var(--ink); }
+.ph-strip { display: flex; align-items: center; gap: clamp(16px, 3vw, 40px); padding-top: 22px; padding-bottom: 8px; border-top: 1px solid var(--line); margin-top: 26px; }
+.ph-count { margin: 0; flex: 0 0 auto; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+.ph-count strong { color: var(--ink); font-weight: 500; }
+.ph-thumbs { display: flex; gap: 8px; overflow: hidden; flex: 1; justify-content: flex-end; }
+.ph-thumbs a { flex: 0 0 auto; width: 58px; height: 58px; overflow: hidden; border-radius: 4px; animation: phIn .8s cubic-bezier(.19,1,.22,1) calc(1.8s + var(--d)) both; }
+.ph-thumbs img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.19,1,.22,1); }
+.ph-thumbs a:hover img { transform: scale(1.12); }
+
 /* Grids */
 .grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(24px, 3.4vw, 48px); align-items: start; }
 .masonry { columns: 3 300px; column-gap: clamp(16px, 2.4vw, 32px); }
@@ -230,6 +258,14 @@ button.link { background: none; border: 0; border-bottom: 1px solid var(--ink); 
 
 @media (max-width: 860px) {
   .statement, .newsletter .inner, .contact-grid, .aotd { grid-template-columns: 1fr; }
+  .ph-grid { grid-template-columns: 1fr; min-height: 0; gap: 22px; }
+  .ph-art { order: -1; }
+  .ph-frame { height: auto; }
+  .ph-bar { margin-top: 12px; }
+  .ph-ctrl .dots { display: none; }
+  .ph-cap { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ph-strip { flex-direction: column; align-items: flex-start; }
+  .ph-thumbs { justify-content: flex-start; width: 100%; overflow-x: auto; scrollbar-width: none; }
   .rail-btn { display: none; }
   .rail-wrap { padding: 0; }
   .rail { height: auto; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-left: var(--gutter); padding: 0 var(--gutter) 8px; scrollbar-width: none; }

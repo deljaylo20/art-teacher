@@ -23,22 +23,32 @@
 </header>
 <main id="main">
 
-<section class="hero" aria-roledescription="carousel" aria-label="Featured paintings">
-  <div class="slides" id="hero-slides"></div>
-  <div class="hero-shade" aria-hidden="true"></div>
-  <div class="wrap hero-text">
-    <p class="eyebrow">San Marcos, Texas</p>
-    <h1>Susan Tadlock Bond</h1>
-    <p class="roles">Artist &middot; Teacher &middot; Consultant</p>
-    <a class="link" href="gallery.html">View the gallery</a>
-  </div>
-  <div class="wrap hero-bar">
-    <p class="slide-cap" id="hero-caption" aria-live="polite"></p>
-    <a class="scroll-cue" href="#intro" aria-label="Scroll to content">&darr;</a>
-    <div class="slide-ctrl">
-      <div class="dots" id="hero-dots"></div>
-      <button type="button" class="pause" id="hero-pause" aria-label="Pause slideshow">Pause</button>
+<section class="paper-hero" aria-label="Introduction">
+  <div class="wrap ph-grid">
+    <div class="ph-text">
+      <p class="eyebrow">Artist &middot; Teacher &middot; Consultant</p>
+      <h1 class="ph-name">Susan<br>Tadlock Bond</h1>
+      <p class="ph-place">San Marcos, Texas</p>
+      <!-- Hook line: built only from what is actually in the gallery. Edit freely. -->
+      <p class="ph-hook">Landscapes, old trucks, house portraits, and the occasional koala in a Santa hat.</p>
+      <div class="ph-cta">
+        <a class="btn" href="gallery.html">Explore the gallery</a>
+        <a class="link" href="contact.html">Commission a piece</a>
+      </div>
     </div>
+    <figure class="ph-art" aria-roledescription="carousel" aria-label="Featured paintings">
+      <button type="button" class="ph-frame" id="ph-frame" aria-label="View painting">
+        <canvas id="ph-canvas" aria-hidden="true"></canvas>
+      </button>
+      <figcaption class="ph-bar">
+        <span class="ph-cap" id="ph-cap" aria-live="polite"></span>
+        <span class="ph-ctrl"><span class="dots" id="ph-dots"></span><button type="button" class="pause" id="ph-pause">Pause</button></span>
+      </figcaption>
+    </figure>
+  </div>
+  <div class="wrap ph-strip">
+    <p class="ph-count" id="ph-count"></p>
+    <div class="ph-thumbs" id="ph-thumbs"></div>
   </div>
 </section>
 
