@@ -24,10 +24,11 @@ window.SITE = {
   }
   function artHTML(w, opts = {}) {
     const alt = esc(w.title + (w.medium ? ", " + w.medium : ""));
-    const inner = w.src ? `<img src="${esc(w.src)}" alt="${alt}" loading="${opts.eager ? "eager" : "lazy"}">` : placeholder(w);
+    const inner = w.src ? `<img src="${esc(thumb(w.src))}" alt="${alt}" loading="${opts.eager ? "eager" : "lazy"}" decoding="async">` : placeholder(w);
     const style = opts.ratio ? ` style="aspect-ratio:${w.ratio || 1}"` : "";
     return `<div class="art"${style}${w.src ? "" : ` role="img" aria-label="${alt} (placeholder)"`}>${inner}</div>`;
   }
+  const thumb = (src) => src.replace(/\/([^/]+)$/, "/thumbs/$1");
   const detail = (w) => [w.year, w.medium, w.size].filter(Boolean).join(" · ");
 
   const no = (i) => String(i + 1).padStart(2, "0");
@@ -138,7 +139,8 @@ window.SITE = {
   const galEl = document.getElementById("gallery");
   if (galEl) {
     const filEl = document.getElementById("filters");
-    const cats = [...new Set(works.map((w) => w.category).filter(Boolean))];
+    const present = new Set(works.map((w) => w.category).filter(Boolean));
+    const cats = [...(window.CATEGORIES || []).filter((c) => present.has(c)), ...[...present].filter((c) => !(window.CATEGORIES || []).includes(c))];
     let current = "All";
     function render() {
       const idx = works.map((w, i) => i).filter((i) => current === "All" || works[i].category === current);
